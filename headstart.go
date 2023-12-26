@@ -39,7 +39,7 @@ func(hs *HeadStart) commands () Commands {
     
     // add the command in the lookup table
     c["create-api"] = Cyan + "\tcreate-api" + Reset + " --" +"Generate the api code-base\n"
-    c["create-auth"] = Yellow + "\tcreate-api" + Reset + " --" + "Generate the api code-base\n"
+    c["comming soon.."] = Yellow + "\tcomming soon.." + Reset + " --" + "Thanks\n"
     
     return c 
 }
@@ -50,7 +50,7 @@ func(hs *HeadStart) setUsage(){
         avilableCommands += value 
     }
 
-    s := fmt.Sprintf("Usage : %s hs <command> \ncommands: \n%s",White, avilableCommands)
+    s := fmt.Sprintf("Usage : %s headstart <command> \ncommands: \n%s",White, avilableCommands)
     hs.Usage = s
 }
 
