@@ -1,14 +1,22 @@
-FILE_NAME ?= main.
+build_directory := bin
 
-#target command
-all : test
+.PHONY: buildexec
 
+#make bin dir and build the exec inside it
+buildexec: setup build 
+
+setup: 
+	mkdir -p bin
+
+build: setup
+	go build -o bin/headstart .
+
+.PHONY: run
+
+#run
 run:
-	@go run .
+	go build run .
 
+#test
 test:
-	@go test -v $(FILE_NAME)
-
-build:
-	@go build .
-
+	go test .
