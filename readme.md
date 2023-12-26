@@ -1,5 +1,5 @@
 # Headstart
-* Still on development *
+* Still on development 
 Headstart is a cli for setting up your backend project at your finger tip.
 
 ## Installation
@@ -18,12 +18,13 @@ export PATH="/path/to/headstart:$PATH"
 source ~/.zshrc or ~/.bashrc (linux)
 ```
 
-## Usage
+## Usage 
+* Only go RawDawg works for now
 ``` bash
 # open your terminal and type headstart and usage will be shown
-
 # project setup
 headstart create-api <project-name>
+
 
 ```
 ## Contributing
