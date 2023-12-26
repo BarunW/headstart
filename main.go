@@ -29,10 +29,13 @@ func main(){
         return
     }
     
-    s := hs.Temp.ProgrammingLangWithDesc()    
+    pLangs := hs.Temp.ProgrammingLangWithDesc()    
     
     nR := NewRender()
-    nR.Render(s)
+    slectedLang := nR.RenderOptions(pLangs)
+
+    proceed := NewProceed()
+    proceed.ShowFrameWorkOpt(slectedLang, name)
 }
 
 

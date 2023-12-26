@@ -10,28 +10,36 @@ type Templates struct {
 type Options struct{}
 
 
+// programming Languages
 const (
-    js string = Yellow + "JavaScript" + Reset 
-    ts string = Blue + "TypeScript" + Reset
-    golang string = Cyan + "GO" + Reset
-    rust string = Orange256 + "RUST" + Reset
+    Js string = Yellow + "JavaScript" + Reset 
+    Ts string = Blue + "TypeScript" + Reset
+    Golang string = Cyan + "Go" + Reset
+    Rust string = Orange256 + "Rust" + Reset
+)
+
+//FrameWork for Go
+const (
+    RawDawgGo string = Blue256 + "RawDawg" + Reset
 )
 
 func NewTemplates() *Templates{
     return &Templates{}
 }
 
- //func (o *Options) ProgrammingLang() []string{
- //    // args(color, name, reset)    
- //    return []string{js, ts, golang, rust}
- //}
-
 func(o *Options) ProgrammingLangWithDesc() map[string]string{
     return map[string]string{
-        js : "[ ask to J_BLOW ]",
-        ts : "[ ts ignore || ask to DHH ]",
-        golang :"[ mid !C ]",
-        rust : "[ C/C++ have better community/Foundation ]" ,
+        Js : "[ ask to J_BLOW ]",
+        Ts : "[ ts ignore || ask to DHH ]",
+        Golang :"[ mid !C ]",
+        Rust : "[ C/C++ have better community/Foundation ]" ,
+
+    }
+}
+
+func(o *Options) GOFrameWork() map[string]string{
+    return map[string]string{
+        RawDawgGo  : "[ setup  using standard library ]",    
     }
 }
 

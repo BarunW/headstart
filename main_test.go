@@ -3,15 +3,19 @@ package main
 import (
 	"fmt"
 	"testing"
-    "log"
+    "os"
 )
 
-func TestAnsciiRemoveRegex(t *testing.T){
+func TestAnsiRemoveRegex(t *testing.T){
     s := Red + "Aloha PHP" + Reset
     rs := RemoveANSI(s)
     if "Aloha PHP" == rs{
         fmt.Println("True")    
         return
     }
-    log.Fatal("Error")
+    fmt.Println("Failed to parse")
+    os.Exit(1)
 }
+
+
+

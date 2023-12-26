@@ -71,9 +71,14 @@ func( r*Render) appendTo(v map[string]string)[][]string {
  //}
  //
 
-func(r *Render) Render(values any){
-    // can be optimized how i display text
-    // there is blinking becuase of rendering the whole content when moving
+func(r *Render) clearScreen(){
+    fmt.Print("\r\033[J")
+}
+
+func(r *Render) RenderOptions(values any) string {
+    
+    r.clearScreen()
+
     window := r.appendTo(values.(map[string]string))
     selector := ">"    
     var X int = len(window) - 1
@@ -83,6 +88,8 @@ func(r *Render) Render(values any){
     
     // key events chan
     event := make(chan keyboard.KeyEvent, 3)
+    defer close(event)
+
     // Print the cursor position.
     fmt.Println("Use i and j to move and select")
     for _, value := range window{
@@ -91,11 +98,13 @@ func(r *Render) Render(values any){
     fmt.Print("\033[F")
     
     for {
-        go HandleKeyInput(event)
+        go r.handleKeyInput(event)
        e := <-event
-//          ================================================
-//          "/r" is to bring cursor at the  begining of line
-//          ================================================
+        /* 
+            =========================
+            "/r" is to bring cursor at the  begining of line
+            =========================
+        */
         if X < len(window) - 1 && e.Rune == 'j'{
 
             window[X][Y] = ""
@@ -116,23 +125,26 @@ func(r *Render) Render(values any){
             fmt.Printf("\033[K%s\r", strings.Join(window[X]," "))
 
         } else if e.Key == keyboard.KeyEnter{
-            fmt.Printf("\033[B\r")
+            fmt.Println()
             break
 
         } else if e.Key == keyboard.KeyEsc{
-            fmt.Println("Exiting")
-            return
+            fmt.Println("\nExiting")
+            r.clear(X+2)
+            return "" 
+            
         }
     }
     r.clear(X+1)
     s := window[X][1]
-    fmt.Println(s)
+    return s
 }
 
-func HandleKeyInput(c chan <- keyboard.KeyEvent){
+
+func(r *Render)handleKeyInput(c chan <- keyboard.KeyEvent){
     keyEvents, err := keyboard.GetKeys(10)
     if err != nil{
-        panic("err")
+        panic(err)
     }
 
     defer func() {
