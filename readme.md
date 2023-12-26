@@ -6,13 +6,8 @@ Headstart is a cli for setting up your backend project at your finger tip.
 ```bash
 git clone git@github.com:BarunW/headstart.git 
 
-cd headstart 
-
-# run make build to build the headstart exec
-make build 
-
 # Add to .zshrc or .bashrc file or other shell rc file
-export PATH="/path/to/headstart:$PATH"
+export PATH="/path/to/headstart/bin:$PATH"
 
 #souce 
 source ~/.zshrc or ~/.bashrc (linux)
