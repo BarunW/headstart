@@ -1,22 +1,9 @@
-build_directory := bin
-
-.PHONY: buildexec
-
-#make bin dir and build the exec inside it
-buildexec: setup build 
-
-setup: 
-	mkdir -p bin
-
-build: setup
+build:
 	go build -o bin/headstart .
-
-.PHONY: run
-
-#run
 run:
-	go build run .
-
-#test
+	go run .
 test:
-	go test .
+	go test -v .
+
+clean:
+	rm -rf bin
