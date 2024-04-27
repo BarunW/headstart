@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
+	"time"
 
+	"github.com/BarunW/headstart/assert"
 	"gopkg.in/ini.v1"
-    "github.com/BarunW/headstart/assert"
 )
 
 type Flag string
@@ -150,34 +153,17 @@ func(hs HSCommands)handleLinkCommand( fType FileType, subcmd... string){
     return
 }
 
-func(hs HSCommands) handlGenCommand(subcmd... string){
+// this function have a side effect of panic if file aren't able to close
+func handleFileGeneration(desPath string, srcPath string) error{
     fh := NewFileHandler()
 
-    cfg, err := ini.Load(hs.configFilePath)
-    if err != nil{
-        slog.Error("Failed to Load config file", "DETAILS", err.Error())
-        os.Exit(1)
-    }
-    
-    // cmdkey is command key that is linked  in the config file
-    cmdKey := subcmd[0]   
-    key := cfg.Section("Commands").Key(cmdKey) 
-    if key.Value() == ""{
-        slog.Error("Unable to find the command", "DETAILS", "Please link command to use gen")
-        os.Exit(1)
-    }
-    
-    ext := path.Ext(key.Value()) 
-    writeToFile := subcmd[1]+ext
-    
-
-    f2W, err := fh.OpenDezzFile(writeToFile)
+    f2W, err := fh.OpenDezzFile(desPath)
     if err != nil{
         slog.Error("Unable to create the input file", "DETAILS", err.Error())
-        os.Exit(1)
+        return err
     }
 
-    f2R, err := fh.OpenDezzReadFile(key.Value())
+    f2R, err := fh.OpenDezzReadFile(srcPath)
     if err != nil{
         slog.Error("Unable to get the file that links to the command", "DETAILS", err.Error())
         os.Exit(1)
@@ -195,13 +181,98 @@ func(hs HSCommands) handlGenCommand(subcmd... string){
     }()
 
     n, err := io.Copy(f2W, f2R) 
-    fmt.Println(n)
     if n == 0 || err != nil{
         slog.Error("Failed to write the file", "DETAILS", err.Error())
-        os.Exit(1)
+        return err
+    }
+    
+    return nil
+}
+
+func handleDirGeneration(srcPath string, destPath string) error{
+    now := time.Now()
+    fileSystem := os.DirFS(srcPath)
+    wg := sync.WaitGroup{}
+
+    var HandleFileFn = func(src fs.File, des os.File){
+        defer func(){ src.Close(); des.Close() }()
+        _, err := io.Copy(&des, src)
+        if err != nil{
+            wg.Done()
+            return
+        }  
+        wg.Done()
+        
     }
  
+    
+    err := fs.WalkDir(fileSystem, ".", func(fpath string, d fs.DirEntry, err error) error {
+        if d.IsDir(){
+            if err := os.Mkdir(path.Join(destPath, fpath), os.ModePerm); err != nil{
+                slog.Error("Unable to create the dir", "DETAILS", err.Error())
+                return err
+            }
+
+        }
+        if d.Type().IsRegular(){
+            src,  err := fileSystem.Open(fpath) 
+            if err != nil{ 
+                slog.Error("Unable to open the source file", "DETAILS", err.Error())
+                return err
+            }
+             
+            des, err := os.Create(path.Join(destPath, fpath))
+            if err != nil{
+                slog.Error("Unable to create the destination file", "DETAILS", err.Error())
+                return err
+            }
+            wg.Add(1)
+            go HandleFileFn(src, *des) 
+        }
+        return nil
+    })
+
+    wg.Wait()
+    if err != nil{
+        slog.Error("Unable to execute the command", "DETATILS", err.Error())
+        return err
+    }
+    fmt.Println(time.Since(now))
+    return nil
 }
+
+func(hs HSCommands) handlGenCommand(subcmd... string){
+    cfg, err := ini.Load(hs.configFilePath)
+    if err != nil{
+        slog.Error("Failed to Load config file", "DETAILS", err.Error())
+        os.Exit(1)
+    }
+    
+    // cmdkey is command key that is linked  in the config file 
+    cmdKey := subcmd[0]   
+    commandSectionKey := cfg.Section("Commands").Key(cmdKey) 
+    typeSectionKey := cfg.Section("LINK_TYPE").Key(cmdKey) 
+    if commandSectionKey.Value() == ""{ 
+        slog.Error("Unable to find the command", "DETAILS", "Please link command to use gen")
+        os.Exit(1)
+    }
+    
+    switch FileType(typeSectionKey.Value()){
+        case FILE:
+            // strip out the extension of the file
+            ext := path.Ext(commandSectionKey.Value()) 
+            destPath := subcmd[1]+ext
+
+            srcPath := commandSectionKey.Value() 
+            if err := handleFileGeneration(destPath, srcPath); err != nil{
+                os.Exit(1)
+            }
+        case DIR:
+            handleDirGeneration(commandSectionKey.Value(), subcmd[1]) 
+    }
+          
+}
+
 
 func(hc HSCommands) processCommandWithSubcmd( cmd Flag , subcmd... string){
     switch cmd{
