@@ -31,6 +31,11 @@ const(
     FILE FileType = "file"
     DIR  FileType = "dir"
 )
+// ALL sections
+const(
+    SECTION_COMMANDS = "Commands"
+    SECTION_TYPES    = "LINK_TYPE"
+)
 
 const CONFIG_FILE string = "config.ini"
 
@@ -66,7 +71,7 @@ func(hs *HSCommands) createCONFIG_FILE(){
         f(err)
     }
 
-    fmt.Println(exPath)
+//    fmt.Println(exPath)
     hs.configFilePath = exPath
 
 }
@@ -118,38 +123,47 @@ func(hs HSCommands)handleLinkCommand( fType FileType, subcmd... string){
     var(
         cfg *ini.File
         err error
-        section *ini.Section
+        commandSection *ini.Section
         linkSection *ini.Section
+        linkPath string
     )
+    linkPath, err = filepath.Abs(subcmd[0])
+    if err != nil{
+        slog.Error("Unable to convert to abs path", "Details", err.Error()) 
+        os.Exit(1) 
+    }
+
+//    fmt.Println("LINK PATH", linkPath)
     
-    fmt.Println("CONFIG PATH", hs.configFilePath)
     cfg, err = ini.Load(hs.configFilePath)
     if err != nil {
         slog.Error("Unable to load the file", "DETAILS", err.Error())
+        os.Exit(1)
     }
 
     // Create the neccessary section in the config file
-    section = cfg.Section("Commands")
-    linkSection = cfg.Section("LINK_TYPE")
+    commandSection = cfg.Section(SECTION_COMMANDS)
+    linkSection = cfg.Section(SECTION_TYPES)
    
     // key that associate with a link file
     cmdKey := subcmd[1] 
     
     // check the input key is already exist or !exist
     // if exist throw error
-    if section.Key(cmdKey).String() != ""{
-        slog.Error("This command already link", "Fix:", "User different command")
+    if commandSection.HasKey(cmdKey){
+        slog.Error("This key is already link")
         os.Exit(1)
     }
-    
+
     // !exist link with the input command key 
-    section.NewKey(cmdKey, subcmd[0])
+    commandSection.NewKey(cmdKey, linkPath)
     linkSection.NewKey(cmdKey, string(fType))
      
     if err := cfg.SaveTo(hs.configFilePath); err != nil{
         slog.Error("Failed to save the file", "DETAILS", err.Error())
         os.Exit(1)
     }
+    fmt.Println("Sucessfully Linked")
     return
 }
 
@@ -180,8 +194,8 @@ func handleFileGeneration(desPath string, srcPath string) error{
         }
     }()
 
-    n, err := io.Copy(f2W, f2R) 
-    if n == 0 || err != nil{
+    _, err = io.Copy(f2W, f2R) 
+    if  err != nil{
         slog.Error("Failed to write the file", "DETAILS", err.Error())
         return err
     }
@@ -204,8 +218,7 @@ func handleDirGeneration(srcPath string, destPath string) error{
         wg.Done()
         
     }
- 
-    
+  
     err := fs.WalkDir(fileSystem, ".", func(fpath string, d fs.DirEntry, err error) error {
         if d.IsDir(){
             if err := os.Mkdir(path.Join(destPath, fpath), os.ModePerm); err != nil{
@@ -250,8 +263,8 @@ func(hs HSCommands) handlGenCommand(subcmd... string){
     
     // cmdkey is command key that is linked  in the config file 
     cmdKey := subcmd[0]   
-    commandSectionKey := cfg.Section("Commands").Key(cmdKey) 
-    typeSectionKey := cfg.Section("LINK_TYPE").Key(cmdKey) 
+    commandSectionKey := cfg.Section(SECTION_COMMANDS).Key(cmdKey) 
+    typeSectionKey := cfg.Section(SECTION_TYPES).Key(cmdKey) 
     if commandSectionKey.Value() == ""{ 
         slog.Error("Unable to find the command", "DETAILS", "Please link command to use gen")
         os.Exit(1)
@@ -272,7 +285,6 @@ func(hs HSCommands) handlGenCommand(subcmd... string){
     }
           
 }
-
 
 func(hc HSCommands) processCommandWithSubcmd( cmd Flag , subcmd... string){
     switch cmd{
@@ -296,7 +308,8 @@ func(hc HSCommands) processCommandWithSubcmd( cmd Flag , subcmd... string){
 
 }
 
-func(hc *HSCommands) CommandsForDisplay() FlagsAndDescrip { 
+
+func(hs *HSCommands) CommandsForDisplay() FlagsAndDescrip { 
     var c FlagsAndDescrip = make(FlagsAndDescrip)
 
     // add the command in the lookup table

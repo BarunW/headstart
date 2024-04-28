@@ -5,5 +5,8 @@ run:
 test:
 	go test -v .
 
-clean:
+clean_bin:
 	rm -rf bin
+clean_cache:
+	go clean -testcache
+	go clean -cache
