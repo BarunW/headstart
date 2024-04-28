@@ -1,12 +1,13 @@
 # Headstart
 * Still on development 
-Headstart is a cli for setting up your backend project at your finger tip.
+Headstart is a productivity cli tool, file/dir creation, boiler code gen etc..
 
 ## Installation
 ```bash
 git clone git@github.com:BarunW/headstart.git 
 
 # Add to .zshrc or .bashrc file or other shell rc file
+# /path/to = where the headstart repo is
 export PATH="/path/to/headstart/bin:$PATH"
 
 #souce 
@@ -14,13 +15,18 @@ source ~/.zshrc or ~/.bashrc (linux)
 ```
 
 ## Usage 
-* Only go RawDawg works for now
+* headstart link <filePath(file or dir)> <name the link> 
+* headstart gen <name of the link> <file/dir name> 
+* headstart <Name of text Editor> <name of the link> 
+* headstart [list all link name]
+
 ``` bash
 # open your terminal and type headstart and usage will be shown
 # project setup
-headstart create-api <project-name>
-
-
+headstart link boilerPlate.go  goBoil
+headstart nvim goBoil 
+headstart gen goBoil "../newGo" 
+headstart 
 ```
 ## Contributing
 

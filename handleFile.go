@@ -4,6 +4,8 @@ import (
 	"io"
 	"log/slog"
 	"os"
+
+	"gopkg.in/ini.v1"
 )
 
 
@@ -40,6 +42,11 @@ func(F *FileHandler) GetExecutablePath() (string, error){
 
     return exPath, nil 
 }
+
+func(F *FileHandler) OpenConfigFile(configPath string) (*ini.File, error) {
+    return ini.Load(configPath)
+}
+
 
 
 

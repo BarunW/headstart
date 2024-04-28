@@ -15,15 +15,15 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-type Flag string
+type Command string
 type SubCommand string
-type FlagsAndDescrip map[Flag]string
+type FlagsAndDescrip map[Command]string
 type SubCommandsAndDescrip  map[SubCommand]string
 type FileType string
 
 const(
-    LINK Flag = "link"
-    GEN  Flag = "gen"
+    LINK Command = "link"
+    GEN  Command = "gen"
 )
 
 // first arg for subcommand
@@ -32,9 +32,10 @@ const(
     DIR  FileType = "dir"
 )
 // ALL sections
+type Section string
 const(
-    SECTION_COMMANDS = "Commands"
-    SECTION_TYPES    = "LINK_TYPE"
+    SECTION_COMMANDS Section = "Commands"
+    SECTION_TYPES    Section = "LINK_TYPE"
 )
 
 const CONFIG_FILE string = "config.ini"
@@ -73,7 +74,6 @@ func(hs *HSCommands) createCONFIG_FILE(){
 
 //    fmt.Println(exPath)
     hs.configFilePath = exPath
-
 }
 
 func NewHSCommands() HSCommands{ 
@@ -142,8 +142,8 @@ func(hs HSCommands)handleLinkCommand( fType FileType, subcmd... string){
     }
 
     // Create the neccessary section in the config file
-    commandSection = cfg.Section(SECTION_COMMANDS)
-    linkSection = cfg.Section(SECTION_TYPES)
+    commandSection = cfg.Section(string(SECTION_COMMANDS))
+    linkSection = cfg.Section(string(SECTION_TYPES))
    
     // key that associate with a link file
     cmdKey := subcmd[1] 
@@ -263,8 +263,8 @@ func(hs HSCommands) handlGenCommand(subcmd... string){
     
     // cmdkey is command key that is linked  in the config file 
     cmdKey := subcmd[0]   
-    commandSectionKey := cfg.Section(SECTION_COMMANDS).Key(cmdKey) 
-    typeSectionKey := cfg.Section(SECTION_TYPES).Key(cmdKey) 
+    commandSectionKey := cfg.Section(string(SECTION_COMMANDS)).Key(cmdKey) 
+    typeSectionKey := cfg.Section(string(SECTION_TYPES)).Key(cmdKey) 
     if commandSectionKey.Value() == ""{ 
         slog.Error("Unable to find the command", "DETAILS", "Please link command to use gen")
         os.Exit(1)
@@ -286,7 +286,17 @@ func(hs HSCommands) handlGenCommand(subcmd... string){
           
 }
 
-func(hc HSCommands) processCommandWithSubcmd( cmd Flag , subcmd... string){
+func GetData(configPath string) *Data{
+    d, err := NewData(configPath) 
+    if err != nil{
+        assert.Assert("While calling NewData()", "commands.go/GetData()", true)
+        os.Exit(1)
+    }
+
+    return d
+}
+
+func(hc HSCommands) processCommandWithSubcmd( cmd Command, subcmd... string){
     switch cmd{
     case LINK:
         if isValid := checkLength(2, len(subcmd)); !isValid{
@@ -304,20 +314,40 @@ func(hc HSCommands) processCommandWithSubcmd( cmd Flag , subcmd... string){
             return
         } 
         hc.handlGenCommand(subcmd...)
+    default:
+        if cmd != "" && len(subcmd) == 1{
+            txtEditor := NewOpenWithTexEditor(*GetData(hc.configFilePath))  
+            txtEditor.Open(string(cmd), subcmd[0])
+        }
+    }
+}
+
+func(hs *HSCommands) ShowAllCommands(){
+    fh := NewFileHandler()
+    cfg, err := fh.OpenConfigFile(hs.configFilePath)
+    if err != nil{
+       slog.Error("Unable to open config file", "Details", err.Error()) 
+       os.Exit(1)
+    }
+    
+    cmdSecton := cfg.Section(string(SECTION_COMMANDS))
+    keys :=  cmdSecton.Keys()
+    keysString := cmdSecton.KeyStrings()
+
+    for i := 0; i < len(keysString); i++{ 
+       fmt.Println(keysString[i]," = ",keys[i].Value())  
     }
 
 }
 
-
 func(hs *HSCommands) CommandsForDisplay() FlagsAndDescrip { 
     var c FlagsAndDescrip = make(FlagsAndDescrip)
-
     // add the command in the lookup table
     c[LINK] = "link with either module/dir/folder or file"  
     c[GEN]  = "do code gen" 
-
     return c
 }
+
 
 func(hs *HSCommands) SubCommandsForDisplay () SubCommandsAndDescrip { 
     var s SubCommandsAndDescrip = make(SubCommandsAndDescrip)
