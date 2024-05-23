@@ -26,6 +26,7 @@ const (
 	GEN  Command = "gen"
     //Copy Content
     CopyContent  Command = "cc"
+    Delete Command = "delete" 
 )
 
 // first arg for subcommand
@@ -337,6 +338,18 @@ func GetData(configPath string) *Data {
 	return d
 }
 
+func (hs HSCommands) DeleteLink(key string){ 
+	cfg, err := ini.Load(hs.configFilePath)
+	if err != nil {
+        panic(err)
+	}
+
+	// cmdkey is command key that is linked  in the config file
+	cfg.Section(string(SECTION_COMMANDS)).DeleteKey(key)
+	cfg.Section(string(SECTION_TYPES)).DeleteKey(key)
+    fmt.Println("Sucessfully delete the link")
+}
+
 // it is growing need to refactor
 func (hc HSCommands) processCommandWithSubcmd(cmd Command, subcmd ...string) {
 	switch cmd {
@@ -362,6 +375,12 @@ func (hc HSCommands) processCommandWithSubcmd(cmd Command, subcmd ...string) {
 			return
 		}
         hc.handleCopyContent(subcmd...)
+    case Delete: 
+		if isValid := checkLength(1, len(subcmd)); !isValid {
+			assert.Assert("There should be 3 subcommands", "user error", false)
+			return
+		}
+        hc.DeleteLink(subcmd[0])
 	default:
 		if cmd != "" && len(subcmd) == 1 {
 			txtEditor := NewExecuteCommand(*GetData(hc.configFilePath))
