@@ -341,12 +341,17 @@ func GetData(configPath string) *Data {
 func (hs HSCommands) DeleteLink(key string){ 
 	cfg, err := ini.Load(hs.configFilePath)
 	if err != nil {
-        panic(err)
+        slog.Error("Unable to load the config.ini file", "Reason", err.Error())
+        os.Exit(1)
 	}
-
+    fmt.Println(key)
 	// cmdkey is command key that is linked  in the config file
 	cfg.Section(string(SECTION_COMMANDS)).DeleteKey(key)
 	cfg.Section(string(SECTION_TYPES)).DeleteKey(key)
+    if err := cfg.SaveTo(hs.configFilePath); err != nil{
+        slog.Error("Unable to save the config.ini file", "Reason", err.Error())
+        os.Exit(1)
+    }
     fmt.Println("Sucessfully delete the link")
 }
 
