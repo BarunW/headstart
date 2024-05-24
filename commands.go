@@ -50,13 +50,18 @@ type HSCommands struct {
 	configFilePath string
 }
 
-func (hs *HSCommands) createCONFIG_FILE() {
+// This parameter
+func (hs *HSCommands) createCONFIG_FILE(s ...string) {
+    var configFile string = CONFIG_FILE
+    if s != nil && len(s) > 0{
+        configFile = s[0]
+    }
 	fh := NewFileHandler()
 	exPath, err := fh.GetExecutablePath()
 	if err != nil {
 		os.Exit(1)
 	}
-	exPath = path.Join(filepath.Dir(exPath), CONFIG_FILE)
+	exPath = path.Join(filepath.Dir(exPath), configFile)
 	var f = func(error) {
 		if os.IsNotExist(err) {
 			cfg := ini.Empty()
@@ -64,7 +69,7 @@ func (hs *HSCommands) createCONFIG_FILE() {
 				slog.Error("Unable to setup", "DETAILS", err.Error())
 				os.Exit(1)
 			}
-			hs.configFilePath = path.Join(exPath, CONFIG_FILE)
+			hs.configFilePath = path.Join(exPath, configFile)
 			return
 		}
 		slog.Error("Failed to open the file", "DETAILS", err.Error())
@@ -80,9 +85,9 @@ func (hs *HSCommands) createCONFIG_FILE() {
 	hs.configFilePath = exPath
 }
 
-func NewHSCommands() HSCommands {
+func NewHSCommands(filePath ...string) HSCommands {
 	hs := HSCommands{}
-	hs.createCONFIG_FILE()
+	hs.createCONFIG_FILE(filePath...)
 	return hs
 }
 
@@ -410,6 +415,27 @@ func (hs *HSCommands) ShowAllCommands() {
 		fmt.Println(keysString[i], " = ", keys[i].Value())
 	}
 
+}
+
+func (hs *HSCommands) LinkOutPut(cmd string){ 
+	fh := NewFileHandler()
+	cfg, err := fh.OpenConfigFile(hs.configFilePath)
+	if err != nil {
+		slog.Error("Unable to open config file", "Details", err.Error())
+		os.Exit(1)
+	}
+
+	iniKey, err := cfg.Section(string(SECTION_COMMANDS)).GetKey(cmd)
+	if err != nil || iniKey.String() == ""{
+		slog.Error("Unable to find the get the link from config file", "Details", err.Error())
+		os.Exit(1)
+	}
+    
+    _, err = fmt.Fprint(os.Stdout, iniKey.String())
+    if err != nil{
+        slog.Error("Unable to give the output", "Details", err.Error())
+        os.Exit(1) 
+    }
 }
 
 func (hs *HSCommands) CommandsForDisplay() FlagsAndDescrip {
