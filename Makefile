@@ -1,5 +1,7 @@
 build:
 	go build -o bin/headstart .
+rbuild:
+	go build -race -o bin/headstart .
 run:
 	go run .
 test:
