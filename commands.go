@@ -125,7 +125,7 @@ func isFolder(dirPath string) error {
 	return nil
 }
 
-// this function produce a side effect that exit on err of failing
+// this function produce a side effect that exit on err on failing
 // certain condition
 func (hs HSCommands) handleLinkCommand(fType FileType, subcmd ...string) {
 	var (
@@ -163,7 +163,7 @@ func (hs HSCommands) handleLinkCommand(fType FileType, subcmd ...string) {
 		os.Exit(1)
 	}
 
-	// !exist link with the input command key
+	// if !exist link with the input command key
 	commandSection.NewKey(cmdKey, linkPath)
 	linkSection.NewKey(cmdKey, string(fType))
 

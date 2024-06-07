@@ -9,6 +9,24 @@ import (
 	"golang.org/x/term"
 )
 
+const (
+	Reset  = "\033[0m"
+	Blue   = "\033[34;1m"
+	Red    = "\033[31m"
+	Green  = "\033[3221m"
+	White  = "\033[37;1m"
+	Yellow = "\033[33;1m"
+	Purple = "\033[35m"
+    Cyan   = "\033[36;1m"
+	Gray   = "\033[90m"
+
+    // 256 color pallete
+    Yellow256 = "\033[;38;5;214m"
+    Blue256   = "\033[;38;5;26m"
+	Cyan256   = "\033[;38;5;51m"
+    Orange256 = "\033[;38;5;208m"
+)
+
 type Timer struct{
     duration time.Duration 
     terminalHeight int
@@ -69,7 +87,7 @@ func(t *Timer) Renderer(d time.Duration){
         select{
         case <-ticker.C: 
             ms++
-            fmt.Printf("  %d: %d : %d : %d\r", h, m, s, ms) 
+            fmt.Printf("  %d%s : %d%s : %d%s : %d\r", h, Green, m, Blue, s, Cyan, ms) 
             f()
         case <-timeOut.C:
             break outer 

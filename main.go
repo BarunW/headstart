@@ -20,8 +20,6 @@ func DefineTimerFlag() func()time.Duration{
             return -1
     }
 }
-
-
 func main() {
 	args := os.Args
 	hs := NewHSCommands()
