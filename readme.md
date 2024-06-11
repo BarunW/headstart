@@ -26,7 +26,8 @@ source ~/.zshrc or ~/.bashrc (linux)
 headstart link boilerPlate.go  goBoil
 headstart nvim goBoil 
 headstart gen goBoil "../newGo" 
-headstart 
+headstart  link <binary or bashscript or any executable> 
+headstart exec <that link executable>
 ```
 ## Contributing
 
