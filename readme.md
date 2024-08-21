@@ -1,6 +1,6 @@
 # Headstart
 * Still on development 
-Headstart is a productivity cli tool, file/dir creation, boiler code gen etc..
+Headstart is a productivity and organiser tool that can manage executable, scripts.
 
 ## Installation
 ```bash
@@ -8,7 +8,7 @@ git clone git@github.com:BarunW/headstart.git
 
 # Add to .zshrc or .bashrc file or other shell rc file
 # /path/to = where the headstart repo is
-export PATH="/path/to/headstart/bin:$PATH"
+export PATH="/path/to/headstart/bin"
 
 #souce 
 source ~/.zshrc or ~/.bashrc (linux)
