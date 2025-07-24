@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -8,6 +9,9 @@ import (
 
 	"golang.org/x/term"
 )
+
+type TimeUnit string
+
 
 const (
 	Reset  = "\033[0m"
@@ -28,7 +32,7 @@ const (
 )
 
 type Timer struct{
-    duration time.Duration 
+	timeUnitAndDuration map[TimeUnit]uint
     terminalHeight int
     terminalwidth int
     rwMut sync.RWMutex
@@ -36,10 +40,10 @@ type Timer struct{
 
 // This function have a side effect when
 // user provide invalid unit of time
-func NewTimer(duration time.Duration){ 
+func NewTimer(timeUintAndDuration map[TimeUnit]uint){ 
     t := &Timer{
-        duration: duration,
         rwMut: sync.RWMutex{},
+		timeUnitAndDuration: timeUintAndDuration,
     }
     t.Start()
 }
@@ -57,56 +61,49 @@ func(t *Timer) HandleScreenRes(){
     }
 
 }
-func(t *Timer) Renderer(d time.Duration){
-    ticker := time.NewTicker(16666700 * time.Nanosecond)
-    timeOut := time.NewTimer(d)
-    var(
-       ms uint8
-       s uint8
-       m uint8
-       h uint8
-   )
-
-    var f = func(){ 
-      if m >= 60{
-          h += 1
-          m  = 0
-      }
-      if s >= 60{
-          m += 1
-          s  = 0
-      }
-      if ms > 60{
-        ms = 0
-        s += 1 
-      }
-
-    }
-    outer:
-    for{
-        select{
-        case <-ticker.C: 
-            ms++
-            fmt.Printf("  %d%s : %d%s : %d%s : %d\r", h, Green, m, Blue, s, Cyan, ms) 
-            f()
-        case <-timeOut.C:
-            break outer 
-        }
-    }
-    return
+func(t *Timer) Renderer() context.Context{
+	ticker := time.NewTicker(16666700 * time.Nanosecond)
+	ctx, cancel := context.WithCancel(context.Background())
+	var(
+		frame uint 
+		s uint = 0
+		m uint = 0
+		h uint = 0
+	)
+	go func(){
+		outer:
+		for{
+			select{
+				case <-ticker.C: 
+				frame++
+				if m == 60{
+					h += 1
+					m  = 0
+				}
+				if s == 60{
+					m += 1
+					s  = 0
+				}
+				if frame == 60{
+					frame = 0
+					s += 1 
+				}
+				
+				fmt.Printf("%sThis is not the precise to millisecond: [  %d%s : %d%s : %d%s : %d ]\r ", Red, h, Green, m, Blue, s, Cyan, frame) 
+				if  h == t.timeUnitAndDuration["h"] && 
+				m == t.timeUnitAndDuration["m"] && 
+				s == t.timeUnitAndDuration["s"]{
+					break outer
+				}
+			}
+		}
+		fmt.Printf("\n")
+		cancel()		
+	}()
+    return ctx
 }
 
 func(t *Timer) Start(){
-    timer := time.NewTimer(t.duration)   
-    outer:
-    for{
-        select {
-        case <-timer.C:
-            fmt.Println("\nTimeOut")
-            break outer
-        default: 
-            t.Renderer(t.duration)
-        }
-    }
-    os.Exit(1)
+	ctx := t.Renderer()
+	<-ctx.Done()
 }
